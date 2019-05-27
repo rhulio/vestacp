@@ -1,0 +1,1 @@
+grep -qF 'FILEMANAGER_KEY=ILOVEREO' /usr/local/vesta/conf/vesta.conf || echo 'FILEMANAGER_KEY=ILOVEREO' >> /usr/local/vesta/conf/vesta.conf && sudo /etc/init.d/vesta restart && sudo /etc/init.d/vesta restart
