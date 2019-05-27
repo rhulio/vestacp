@@ -1,0 +1,2 @@
+sudo exim -bp | exiqgrep -i | xargs exim -Mrm
+
