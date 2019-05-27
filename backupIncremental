@@ -1,0 +1,107 @@
+#!/bin/bash
+
+temporario=/dev/shm/backupTemporario
+destino=/backup
+
+export VESTA=/usr/local/vesta/
+
+function sincronizar () {
+	if [ -z $2 ];then
+		rsync -au --delete $1 $destino/$usuarioBackup
+	else
+		rsync -au --delete $1 $destino/$usuarioBackup/$2
+	fi
+}
+
+function limpa () {
+	if [ -d $temporario ];then
+		cd /tmp
+		rm -rf "$temporario"
+	fi
+}
+
+function verifica () {
+	if [ ! -d $temporario ];then
+		mkdir -p $temporario
+	else
+	    limpa
+	    mkdir -p $temporario
+	fi
+
+	mkdir $temporario/$1
+	if [[ ! -e $destino/$usuarioBackup/arquivos ]]; then
+		sincronizar $temporario/$1
+	fi
+
+	usuarioBackup=$1
+
+	if [ -d /etc/exim4 ];then
+		EXI=/etc/exim4
+	else
+		EXI=/etc/exim
+	fi
+}
+
+function pegaSenha () {
+	usuarioS=$1
+	mkdir ${temporario}/senhas
+
+	touch $temporario/senhas/passwd
+	touch $temporario/senhas/shadow
+	touch $temporario/senhas/group 
+	chmod 600 $temporario/senhas/passwd $temporario/senhas/group  $temporario/senhas/shadow
+	grep "^$usuarioS:" /etc/passwd > $temporario/senhas/passwd
+	grep "^$usuarioS:" /etc/shadow > $temporario/senhas/shadow
+	grep "^$usuarioS:" /etc/group > $temporario/senhas/group
+	sincronizar $temporario/senhas
+}
+
+function backupBanco () {
+	usuarioB=$1
+	cd $temporario
+	mkdir bancos
+
+	for db in $(/usr/local/vesta/bin/v-list-databases $usuarioB plain | awk '{ print  $1 }')
+	do
+		sudo mysqldump $db > bancos/$db.sql
+		gzip bancos/$db.sql
+		rm -f bancos/$db.sql
+	done
+	
+	sincronizar $temporario/bancos
+	rm -rf bancos/
+}
+
+function retorno () {
+	verifica $1
+	rm -rf /home/$1/tmp/*
+	sincronizar /home/$1/ arquivos
+	sincronizar /usr/local/vesta/data/users/$1/ vesta
+	backupBanco $1
+	pegaSenha $1
+	limpa
+}
+
+function backupAll () {
+	for usuarioAll in $(/usr/local/vesta/bin/v-list-users plain | awk '{ print  $1 }')
+	do
+		usuarioBackup=$usuarioAll
+		retorno $usuarioAll
+	done
+}
+
+verificaUsuario () {
+	usuarioV=$1
+	if /usr/local/vesta/bin/v-list-users plain | awk '{ print  $1 }' |grep -wc $usuarioV ;then
+		retorno $usuarioV
+	fi
+}
+
+if [ "$1" == "--all" ]; then
+	backupAll
+else
+	for argsBackup in "$@"
+	    do
+	        verificaUsuario $argsBackup
+	    done
+	fi
