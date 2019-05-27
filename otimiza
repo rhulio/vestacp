@@ -1,0 +1,10 @@
+VESTA=/usr/local/vesta
+export VESTA
+    
+PATH=$PATH:/usr/local/vesta/bin
+export PATH
+
+
+for i in `/usr/local/vesta/bin/v-list-sys-users | awk '{if(NR>2)print}'`; do find /home/$i/web/ -name 'public_html' -type d -print0 | xargs -0 -I {} find {} -iname '*.jpg' -type f -print0 | xargs -0 -I {} sudo -H -u $i jpegoptim --strip-all {}; done
+
+for i in `/usr/local/vesta/bin/v-list-sys-users | awk '{if(NR>2)print}'`; do find /home/$i/web/ -name 'public_html' -type d -print0 | xargs -0 -I {} find {} -iname '*.png' -type f -print0 | xargs -0 -I {} sudo -H -u$i optipng {}; done
