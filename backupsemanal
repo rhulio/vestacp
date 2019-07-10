@@ -1,6 +1,0 @@
-sudo rm -rf /backup/tmp.*
-sudo rm -rf /tmp/tmp.*
-
-uptime
-sshpass -p '4313481856365268.sUTY79Mfm62c.TSBDDKKnszFqqcEUfeBRnKAkj6RKm28G' rsync -avoptuh --partial --progress --force --delete-before --stats -e 'ssh -o StrictHostKeyChecking=no' /backup/ pca@gateways.storage.bhs3.cloud.ovh.net:servidorSimbolo/semanal/
-uptime
